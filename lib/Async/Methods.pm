@@ -101,9 +101,12 @@ sub AUTOLOAD {
 
 =head1 NAME
 
-Async::Methods - Description goes here
+Async::Methods - Helpers for async method work
 
 =head1 SYNOPSIS
+
+Sorry, this is not documented yet and is just a demonstration of the
+relevant ideas. Please don't try and use it yet.
 
 =head1 DESCRIPTION
 
