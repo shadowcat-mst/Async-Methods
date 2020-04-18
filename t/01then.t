@@ -30,7 +30,7 @@ $start_f->done(12);
 
 is($f->get, 12);
 
-$f = MyTest->start::thing->then::continue;
+$f = MyTest->thing->then::continue;
 
 $start_f->done('MyTest');
 

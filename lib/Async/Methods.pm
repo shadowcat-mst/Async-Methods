@@ -32,8 +32,6 @@ package then;
 
 sub then::_ {
   my ($self, $method, @args) = @_;
-  Carp::croak "Can only call then on start:: or then:: object"
-    unless my $start_obj = $start{$self};
   my $f_type = ref($self);
   my $f; $f = $self->then(
     sub { my $obj = shift; $obj->$method(@args, @_) },
@@ -45,7 +43,9 @@ sub then::_ {
       }
     },
   );
-  $then{$f} = $start{$f} = $start_obj;
+  if (my $start_obj = $start{$self}) {
+    $then{$f} = $start{$f} = $start_obj;
+  }
   return $f;
 }
 
@@ -59,9 +59,9 @@ package else;
 
 sub else::_ {
   my ($self, $method, @args) = @_;
-  Carp::croak "Can only call else on result of then"
+  Carp::croak "Can only call else on result of start:: -> then::"
     unless my $start_obj = $then{$self};
-  $else{$self} = sub { $start_obj->$method(@_) };
+  $else{$self} = sub { $start_obj->$method(@args, @_) };
   return $self;
 }
 
@@ -75,9 +75,9 @@ package catch;
 
 sub catch::_ {
   my ($self, $method, @args) = @_;
-  Carp::croak "Can only call await on start:: or then:: object"
+  Carp::croak "Can only call await on start:: or start:: -> then:: object"
     unless my $start_obj = $start{$self};
-  $self->catch(sub { $start_obj->$method(@_) });
+  $self->catch(sub { $start_obj->$method(@args, @_) });
 }
 
 sub AUTOLOAD {
