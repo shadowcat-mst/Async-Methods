@@ -99,7 +99,10 @@ sub this {
 
 sub await::_ {
   my ($self, $method, @args) = @_;
-  my $f = $self->then::_($method, @args);
+  my $f = ($self->can('then')
+    ? $self->then::_($method, @args)
+    : $self->$method(@args)
+  );
   $f->await::this;
 }
 

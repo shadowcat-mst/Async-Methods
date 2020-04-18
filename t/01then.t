@@ -60,7 +60,7 @@ is(MyTest->start::continue->await::this, 3);
 
 is(eval { MyTest->start::oops->await::this }, undef);
 
-is($@, "OOPS\n");
+like($@, qr/^OOPS/);
 
 $f = MyTest->start::_(sub { Future->done("yay") });
 
