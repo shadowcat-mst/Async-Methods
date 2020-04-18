@@ -15,28 +15,28 @@ fieldhash my %else;
 
 package start;
 
-sub AUTOLOAD {
-  my ($self, @args) = @_;
-  our $AUTOLOAD;
-  Carp::croak "Can't call $AUTOLOAD on class $self" unless ref($self);
-  my ($method) = $AUTOLOAD =~ /^then::(.+)$/;
-  $method = shift @args if $method eq '_';
+sub start::_ {
+  my ($self, $method, @args) = @_;
   my $f = $self->$method(@args);
   $start{$f} = $self;
   return $f;
 }
 
-package then;
-
 sub AUTOLOAD {
   my ($self, @args) = @_;
-  our $AUTOLOAD;
-  Carp::croak "Can't call $AUTOLOAD on class $self" unless ref($self);
-  my ($method) = $AUTOLOAD =~ /^then::(.+)$/;
-  $method = shift @args if $method eq '_';
+  my ($method) = our $AUTOLOAD =~ /^start::(.+)$/;
+  $self->start::_($method => @args);
+}
+
+package then;
+
+sub then::_ {
+  my ($self, $method, @args) = @_;
+  Carp::croak "Can only call then on start:: or then:: object"
+    unless my $start_obj = $start{$self};
   my $f_type = ref($self);
   my $f; $f = $self->then(
-    sub { my ($obj) = @_; $obj->$method(@args) }.
+    sub { my $obj = shift; $obj->$method(@args, @_) },
     sub {
       if (my $else = $else{$f}) {
         $else->(@_)
@@ -45,35 +45,45 @@ sub AUTOLOAD {
       }
     },
   );
-  $then{$f} = $start{$f} = $start{$self};
+  $then{$f} = $start{$f} = $start_obj;
   return $f;
+}
+
+sub AUTOLOAD {
+  my ($self, @args) = @_;
+  my ($method) = our $AUTOLOAD =~ /^then::(.+)$/;
+  $self->then::_($method => @args);
 }
 
 package else;
 
-sub AUTOLOAD {
-  my ($self, @args) = @_;
-  our $AUTOLOAD;
-  Carp::croak "Can't call $AUTOLOAD on class $self" unless ref($self);
-  my ($method) = $AUTOLOAD =~ /^else::(.+)$/;
-  $method = shift @args if $method eq '_';
+sub else::_ {
+  my ($self, $method, @args) = @_;
   Carp::croak "Can only call else on result of then"
     unless my $start_obj = $then{$self};
   $else{$self} = sub { $start_obj->$method(@_) };
   return $self;
 }
 
-package catch;
-
 sub AUTOLOAD {
   my ($self, @args) = @_;
-  our $AUTOLOAD;
-  Carp::croak "Can't call $AUTOLOAD on class $self" unless ref($self);
-  my ($method) = $AUTOLOAD =~ /^catch::(.+)$/;
-  $method = shift @args if $method eq '_';
+  my ($method) = our $AUTOLOAD =~ /^else::(.+)$/;
+  $self->else::_($method => @args);
+}
+
+package catch;
+
+sub catch::_ {
+  my ($self, $method, @args) = @_;
   Carp::croak "Can only call await on start:: or then:: object"
     unless my $start_obj = $start{$self};
   $self->catch(sub { $start_obj->$method(@_) });
+}
+
+sub AUTOLOAD {
+  my ($self, @args) = @_;
+  my ($method) = our $AUTOLOAD =~ /^catch::(.+)$/;
+  $self->catch::_($method => @args);
 }
 
 package await;
@@ -87,14 +97,18 @@ sub this {
   return $self->get;
 }
 
+sub await::_ {
+  my ($self, $method, @args) = @_;
+  my $f = $start{$self}
+    ? $self->then::_($method, @args)
+    : $self->$method(@args);
+  $f->await::this;
+}
+
 sub AUTOLOAD {
   my ($self, @args) = @_;
-  our $AUTOLOAD;
-  Carp::croak "Can't call $AUTOLOAD on class $self" unless ref($self);
-  my ($method) = $AUTOLOAD =~ /^await::(.+)$/;
-  $method = shift @args if $method eq '_';
-  my $f = $self->${\"then::${method}"}(@args);
-  $f->await::this;
+  my ($method) = our $AUTOLOAD =~ /^await::(.+)$/;
+  $self->await::_($method => @args);
 }
 
 1;
