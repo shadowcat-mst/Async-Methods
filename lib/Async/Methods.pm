@@ -75,7 +75,7 @@ package catch;
 
 sub catch::_ {
   my ($self, $method, @args) = @_;
-  Carp::croak "Can only call await on start:: or start:: -> then:: object"
+  Carp::croak "Can only call catch on start:: or start:: -> then:: object"
     unless my $start_obj = $start{$self};
   $self->catch(sub { $start_obj->$method(@args, @_) });
 }
@@ -99,9 +99,7 @@ sub this {
 
 sub await::_ {
   my ($self, $method, @args) = @_;
-  my $f = $start{$self}
-    ? $self->then::_($method, @args)
-    : $self->$method(@args);
+  my $f = $self->then::_($method, @args);
   $f->await::this;
 }
 
