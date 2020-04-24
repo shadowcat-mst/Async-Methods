@@ -1,5 +1,6 @@
 Revision history for Async-Methods
 
+0.000003 - 2020-04-24
   - Inline Mojo::Promise::Role::Get logic
 
 0.000002 - 2020-04-18
