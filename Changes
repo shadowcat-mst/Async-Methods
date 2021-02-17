@@ -1,5 +1,7 @@
 Revision history for Async-Methods
 
+  - die if accidentally called as class method via indirect object notation
+
 0.000003 - 2020-04-24
   - Inline Mojo::Promise::Role::Get logic
 

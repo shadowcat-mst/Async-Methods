@@ -105,11 +105,14 @@ sub this {
     }
     return wantarray ? @result : $result[0];
   }
-  die "Don't know how to await for $self";
+  Carp::croak "Don't know how to await::this for $self";
 }
 
 sub await::_ {
   my ($self, $method, @args) = @_;
+  if ($self eq 'await') {
+    Carp::croak "Call of '${method} await' should be '${method} +await'";
+  }
   my $f = ($self->can('then')
     ? $self->then::_($method, @args)
     : $self->$method(@args)
