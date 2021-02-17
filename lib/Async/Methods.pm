@@ -39,7 +39,7 @@ sub then::_ {
       if (my $else = $else{$f}) {
         $else->(@_)
       } else {
-        $f_type->AWAIT_FAIL(@_)
+        $f_type->AWAIT_NEW_FAIL(@_)
       }
     },
   );
